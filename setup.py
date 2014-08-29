@@ -27,6 +27,11 @@ setup(
         'icalendar',
         'google-api-python-client'
     ],
+    entry_points={
+        'console_scripts': [
+            'v2gcalendar = v2gcalendar.main:main'
+        ]
+    },
     test_suite='nose.collector',
     tests_require=[
         'nose',
