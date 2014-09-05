@@ -70,7 +70,8 @@ def print_event(event):
     print json.dumps(event, indent=2, sort_keys=True)
 
 
-def import_vcalendar(ical, not_before=5, not_after=60, exclude=None):
+def import_vcalendar(ical, not_before=5, not_after=60, exclude=None,
+                     no_attendees=False):
     now = datetime.datetime.now()
     today = now.date()
 
@@ -108,6 +109,8 @@ def import_vcalendar(ical, not_before=5, not_after=60, exclude=None):
                 value = v.to_ical()
                 value = ['RRULE:%s' % value]
             elif k == 'ATTENDEE':
+                if no_attendees:
+                    continue
                 key = 'attendees'
                 value = []
                 for a in v:
@@ -174,8 +177,10 @@ def import_vcalendar(ical, not_before=5, not_after=60, exclude=None):
 
 
 def upload_calendar(calendar_service, ical, calendar_id,
-                    not_before=5, not_after=60, exclude=None):
-    local_events = import_vcalendar(ical, not_before, not_after, exclude)
+                    not_before=5, not_after=60, exclude=None,
+                    no_attendees=False):
+    local_events = import_vcalendar(ical, not_before, not_after, exclude,
+                                    no_attendees)
     google_events = calendar_service.get_events(calendar_id, True)
     added_events = []
 
@@ -246,6 +251,9 @@ def parse_args():
                         nargs='*',
                         metavar='REGEX',
                         help='Exclude event by matching the summary')
+    parser.add_argument('--no-attendees',
+                        action='store_true',
+                        help='Don\'t upload attendees')
     parser.add_argument('-u', '--upload',
                         nargs=1,
                         type=argparse.FileType('r'),
@@ -283,7 +291,7 @@ def main():
         # action: upload calendar
         upload_calendar(calendar_service, args.upload[0].read(), calendar_id,
                         args.not_before[0], args.not_after[0],
-                        args.exclude)
+                        args.exclude, args.no_attendees)
     except AccessTokenRefreshError:
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
